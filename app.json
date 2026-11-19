@@ -1,9 +1,9 @@
 {
   "expo": {
-    "name": "book-library",
-    "slug": "book-library",
+    "name": "Simple PDF Reader",
+    "slug": "pdf-viewer",
     "version": "1.0.0",
-    "scheme": "booklibrary",
+    "scheme": "pdfviewer",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -18,7 +18,7 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.dulaksha_d.booklibrary"
+      "package": "com.dulaksha_d.pdf-viewer"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -37,9 +37,6 @@
         "asyncRoutes": {
           "web": true
         }
-      },
-      "eas": {
-        "projectId": "911cb2bf-2b2c-4a24-9f4c-d7d5f19b5251"
       }
     }
   }
