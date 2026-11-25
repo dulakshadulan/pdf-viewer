@@ -52,7 +52,9 @@ export default function SettingsScreen() {
           <Button title="Test file copy" onPress={handleFileSystemSmokeTest} />
           {fileTestResult ? <Text style={styles.debug}>{fileTestResult}</Text> : null}
         </>
-      ) : null}
+      ) : (
+        <Text style={styles.subtitle}>Your PDFs are stored on this device only.</Text>
+      )}
     </View>
   );
 }
