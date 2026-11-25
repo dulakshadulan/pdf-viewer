@@ -1,9 +1,9 @@
 {
   "expo": {
-    "name": "Simple PDF Reader",
-    "slug": "pdf-viewer",
+    "name": "PDF Reader",
+    "slug": "pdf-reader",
     "version": "1.0.0",
-    "scheme": "pdfviewer",
+    "scheme": "pdfreader",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -18,7 +18,7 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.dulaksha_d.pdf-viewer"
+      "package": "com.dulaksha.pdfreader"
     },
     "web": {
       "favicon": "./assets/favicon.png"

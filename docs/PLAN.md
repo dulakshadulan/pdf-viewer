@@ -1,15 +1,24 @@
-# Book Library — Implementation Plan
+# PDF Reader — Implementation Plan
 
-Mobile book library app. Users upload their own PDFs into a private personal
-library. The 3D rotunda interface comes later; the core is built with plain 2D
-screens first.
+A simple, free, ad-free, offline PDF reader. Users keep a private library of
+PDFs on their device; files never leave the device. There is no 3D interface,
+no cloud sync, no accounts, and no analytics.
+
+## Scope
+
+- Local library of PDFs.
+- "Open with" support for PDFs opened from other apps.
+- Reader with resume at the last page, page jump, zoom, and scroll or paged mode.
+- Page colors: white, sepia, night.
+- Keep-screen-on setting.
+- Privacy-first: no tracking, no ads, no accounts, no cloud.
 
 ## Stack
 
 - React Native + Expo (TypeScript, strict)
 - Expo Router, routes in `src/app/`
 - Local SQLite is the only source of truth for the UI (offline-first)
-- Supabase cloud sync is stubbed for now (no Supabase packages yet)
+- `react-native-pdf` with `react-native-blob-util` for rendering
 - EAS development builds (development client), not Expo Go
 
 ## Folder layout
@@ -27,8 +36,7 @@ src/
     library/                # hooks + presentational components
     upload/
     reader/
-  sync/                     # SyncProvider interface + no-op stub (later)
-  lib/                      # env, files, format helpers (later as needed)
+  lib/                      # files, format, and other helpers
 ```
 
 Keep non-route code outside `src/app/` and keep business logic out of screen
@@ -55,7 +63,8 @@ CREATE INDEX books_added_at_idx ON books (added_at DESC);
 ```
 
 `synced` is stored as `0 | 1` and mapped to/from `boolean` in exactly one place
-(`src/db/types.ts`).
+(`src/db/types.ts`). `remote_path` and `synced` are legacy columns from the old
+cloud-sync scope; they are unused and can be dropped in a future migration.
 
 ## Migrations
 
@@ -78,17 +87,19 @@ first argument.
 ## Build order
 
 1. Router scaffold (done)
-2. DB layer: packages, schema, migrations, repository, provider, dev smoke test
-3. Upload: document picker, private file copy, insert book
-4. Library screen: list books from SQLite
-5. Reader: resume at `last_page`, save progress, fill `total_pages` on first open
-6. Sync stubs: `SyncProvider` interface + no-op implementation
-7. Verify: typecheck, lint, device testing
+2. DB layer: packages, schema, migrations, repository, provider, dev smoke test (done)
+3. Upload: document picker, private file copy, insert book (done)
+4. Library screen: list books from SQLite (done)
+5. Reader: resume at `last_page`, save progress, fill `total_pages` on first open (done)
+6. "Open with" support: register PDF handling and import into the library
+7. Reader enhancements: page jump, zoom, scroll or paged mode
+8. Page colors: white, sepia, night
+9. Keep-screen-on setting
+10. Verify: typecheck, lint, device testing
 
 ## Native dependencies
 
-Installed now in one batch so a single EAS development rebuild covers
-everything:
+Installed in one batch so a single EAS development rebuild covers everything:
 
 - `expo-sqlite`
 - `expo-crypto`
@@ -99,14 +110,10 @@ everything:
 - `@config-plugins/react-native-pdf`
 - `@config-plugins/react-native-blob-util`
 
-PDF screen implementation is deferred to the reader step; only install and
-native configuration happen in step 2.
-
 ## Rules
 
-- Upload-based personal libraries only; files are private per user.
-- No cross-user sharing or discovery features.
-- Supabase storage isolation will use RLS when sync is implemented.
-- Keep 3D code in `src/scene` and reading/book management in `src/features`.
+- On-device only; no upload, sync, sharing, accounts, analytics, or ads.
+- No 3D.
+- Keep reading/book management in `src/features`.
 - Small commits, one feature per task.
 - Do not add libraries without agreement.

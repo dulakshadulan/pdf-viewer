@@ -1,17 +1,32 @@
 This is an Expo/React Native mobile application. Prioritize mobile-first patterns, performance, and cross-platform compatibility.
 
-# Book Library App
-Mobile book library with a 3D rotunda interface.
+# PDF Reader
+
+A simple, free, ad-free, offline PDF reader. Files stay on the device — no 3D,
+no cloud sync, no accounts, and no analytics.
+
+## Scope
+
+- Local library of PDFs.
+- "Open with" support for PDFs opened from other apps.
+- Reader with resume at the last page, page jump, zoom, and scroll or paged mode.
+- Page colors: white, sepia, night.
+- Keep-screen-on setting.
+- Privacy-first: no tracking, no ads, no accounts, no cloud.
 
 ## Stack
-- React Native + Expo (TypeScript)
-- 3D: react-three-fiber / expo-three, ONE shared scene, two camera states (rotunda <-> shelf)
-- Backend: Supabase (auth + private storage)
 
-## Rules
-- Upload-based personal libraries only. Files are private per user.
-- No cross-user sharing or discovery features. Storage isolation via RLS.
-- Keep 3D code in /src/scene, reading/book management in /src/features.
+- React Native + Expo (TypeScript)
+- Expo Router, routes in `src/app/`
+- Local SQLite as the only source of truth
+- PDF rendering: `react-native-pdf` + `react-native-blob-util`
+- EAS development builds (development client), not Expo Go
+
+## Product rules
+
+- Keep all user files and reading data on-device. No upload, sync, or sharing features.
+- Do not add 3D, cloud sync, accounts, analytics, or ads.
+- Keep reading/book management in `/src/features`; keep non-route code outside `src/app/`.
 - Small commits, one feature per task.
 
 ## Expo has changed — do not trust your training data
@@ -48,7 +63,7 @@ Run lint and typecheck before declaring any task done.
 Use EAS to build, sign, and submit the app in the cloud (`eas build`, `eas submit`) and to ship over-the-air updates (`eas update`) — no local Xcode or Android Studio required. Run EAS CLI as `bunx eas-cli <command>` in Bun projects, or `npx eas-cli@latest <command>` otherwise; substitute that for bare `eas` in docs examples.
 Docs: https://docs.expo.dev/eas/index.md
 
-## Rules
+## Expo rules
 
 - If `ios/` and `android/` directories do not exist, they are generated (Continuous Native Generation). Never create or edit them by hand — configure native behavior in `app.json` and config plugins.
 - Expo Go only includes its bundled native modules. After adding a library with native code, the app needs a development build: `npx expo run:ios|android` locally, or `eas build --profile development`.

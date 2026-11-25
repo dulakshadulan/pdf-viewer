@@ -43,7 +43,9 @@ export default function SettingsScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Settings</Text>
-      <Text style={styles.subtitle}>Account and sync settings will live here.</Text>
+      <Text style={styles.subtitle}>
+        A simple, free, offline PDF reader. Your PDFs stay on this device.
+      </Text>
       {__DEV__ ? (
         <>
           <Text style={styles.debug}>Books in DB: {bookCount ?? '—'}</Text>

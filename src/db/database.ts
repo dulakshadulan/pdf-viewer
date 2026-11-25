@@ -2,7 +2,7 @@ import type { SQLiteDatabase } from 'expo-sqlite';
 
 import { BOOKS_SCHEMA_SQL, DATABASE_VERSION } from './schema';
 
-export const DATABASE_NAME = 'book-library.db';
+export const DATABASE_NAME = 'pdf-reader.db';
 
 export async function migrateDbIfNeeded(db: SQLiteDatabase): Promise<void> {
   const result = await db.getFirstAsync<{ user_version: number }>('PRAGMA user_version');
