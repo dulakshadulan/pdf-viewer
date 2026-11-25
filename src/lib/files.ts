@@ -1,4 +1,5 @@
 import { Directory, File, Paths } from 'expo-file-system';
+import * as FileSystemLegacy from 'expo-file-system/legacy';
 
 import { errorMessage, StageError } from './errors';
 
@@ -86,18 +87,28 @@ export async function copyIntoBooksDir(sourceUri: string): Promise<string> {
     }
 
     try {
-      await source.copy(destination);
+      if (sourceUri.startsWith('content://')) {
+        await FileSystemLegacy.copyAsync({ from: sourceUri, to: destination.uri });
+      } else {
+        await source.copy(destination);
+      }
 
       if (__DEV__) {
         console.log('[upload] copyFile ok', destination.uri);
       }
     } catch (copyError) {
       if (__DEV__) {
-        console.warn('[upload] copyFile failed, retrying with streams', errorMessage(copyError));
+        console.warn('[upload] copyFile failed, retrying', errorMessage(copyError));
       }
 
       try {
-        await copyWithStreams(source, destination);
+        deleteFileIfPresent(destination);
+
+        if (sourceUri.startsWith('content://')) {
+          await source.copy(destination);
+        } else {
+          await copyWithStreams(source, destination);
+        }
 
         if (__DEV__) {
           console.log('[upload] copyFile fallback ok', destination.uri);
