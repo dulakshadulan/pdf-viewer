@@ -1,5 +1,6 @@
 import type { Book } from '@/db';
 import { deleteBook } from '@/db';
+import { deleteCover } from '@/lib/covers';
 import { errorMessage } from '@/lib/errors';
 import { deleteBookFile } from '@/lib/files';
 import { useSQLiteContext } from 'expo-sqlite';
@@ -29,6 +30,10 @@ export function useDeleteBook(refresh: RefreshBooks): UseDeleteBookResult {
           deleteBookFile(book.fileUri);
         } catch (fileError) {
           console.warn('[library] failed to delete book file', fileError);
+        }
+
+        if (book.coverUri) {
+          deleteCover(book.coverUri);
         }
 
         await deleteBook(db, book.id);

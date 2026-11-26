@@ -1,4 +1,5 @@
-import { addBook } from '@/db';
+import { addBook, updateCover } from '@/db';
+import { generateCover } from '@/lib/covers';
 import { errorMessage } from '@/lib/errors';
 import { copyIntoBooksDir, deleteBookFile } from '@/lib/files';
 import { titleFromFilename } from '@/lib/format';
@@ -113,6 +114,15 @@ export function useOpenIncomingFile(uri: string | undefined): UseOpenIncomingFil
 
         const book = await addBook(db, { title, fileUri: storedUri, fileType: 'pdf' });
         imported = true;
+
+        void (async () => {
+          try {
+            const coverUri = await generateCover(book.id, book.fileUri);
+            await updateCover(db, book.id, coverUri);
+          } catch (coverError) {
+            console.warn('[open-with] cover generation failed', coverError);
+          }
+        })();
 
         if (!active) {
           return;

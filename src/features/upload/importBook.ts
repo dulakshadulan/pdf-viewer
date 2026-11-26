@@ -1,5 +1,6 @@
 import type { Book } from '@/db';
-import { addBook } from '@/db';
+import { addBook, updateCover } from '@/db';
+import { generateCover } from '@/lib/covers';
 import { errorMessage, StageError } from '@/lib/errors';
 import { copyIntoBooksDir, deleteBookFile } from '@/lib/files';
 import type { SQLiteDatabase } from 'expo-sqlite';
@@ -36,6 +37,15 @@ export async function importBook(db: SQLiteDatabase, input: ImportBookInput): Pr
     if (__DEV__) {
       console.log('[upload] insertDb ok', book.id);
     }
+
+    void (async () => {
+      try {
+        const coverUri = await generateCover(book.id, book.fileUri);
+        await updateCover(db, book.id, coverUri);
+      } catch (coverError) {
+        console.warn('[upload] cover generation failed', coverError);
+      }
+    })();
 
     return book;
   } catch (error) {

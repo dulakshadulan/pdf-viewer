@@ -1,6 +1,7 @@
 import type { Book } from '@/db';
 import { colorFromId, formatProgress } from '@/lib/format';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 interface BookCardProps {
   book: Book;
@@ -12,6 +13,8 @@ interface BookCardProps {
 export function BookCard({ book, disabled = false, onPress, onLongPress }: BookCardProps) {
   const initial = book.title.trim().charAt(0).toUpperCase() || '?';
   const author = book.author.trim() || 'Unknown author';
+  const [failedCoverUri, setFailedCoverUri] = useState<string | null>(null);
+  const showCover = Boolean(book.coverUri) && failedCoverUri !== book.coverUri;
 
   return (
     <Pressable
@@ -29,6 +32,14 @@ export function BookCard({ book, disabled = false, onPress, onLongPress }: BookC
     >
       <View style={[styles.cover, { backgroundColor: colorFromId(book.id) }]}>
         <Text style={styles.initial}>{initial}</Text>
+        {showCover && book.coverUri ? (
+          <Image
+            source={{ uri: book.coverUri }}
+            style={styles.coverImage}
+            resizeMode="cover"
+            onError={() => setFailedCoverUri(book.coverUri)}
+          />
+        ) : null}
       </View>
       <Text style={styles.title} numberOfLines={2}>
         {book.title}
@@ -63,9 +74,17 @@ const styles = StyleSheet.create({
   },
   cover: {
     alignItems: 'center',
-    aspectRatio: 3 / 4,
+    aspectRatio: 2 / 3,
     borderRadius: 10,
     justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  coverImage: {
+    bottom: 0,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
   },
   initial: {
     color: '#ffffff',

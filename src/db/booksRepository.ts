@@ -67,6 +67,15 @@ export async function updateTotalPages(
   return result.changes > 0;
 }
 
+export async function updateCover(
+  db: SQLiteDatabase,
+  id: string,
+  coverUri: string | null
+): Promise<boolean> {
+  const result = await db.runAsync('UPDATE books SET cover_uri = ? WHERE id = ?', coverUri, id);
+  return result.changes > 0;
+}
+
 export async function deleteBook(db: SQLiteDatabase, id: string): Promise<boolean> {
   const result = await db.runAsync('DELETE FROM books WHERE id = ?', id);
   return result.changes > 0;
