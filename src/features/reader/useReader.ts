@@ -1,5 +1,11 @@
 import type { Book } from '@/db';
 import { getBook, updateProgress, updateTotalPages } from '@/db';
+import {
+  DEFAULT_READING_MODE,
+  getReadingMode,
+  setReadingMode as saveReadingMode,
+  type ReadingMode,
+} from '@/lib/settings';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -9,14 +15,20 @@ export interface UseReaderResult {
   book: Book | null;
   loading: boolean;
   notFound: boolean;
+  currentPage: number;
+  totalPages: number;
+  readingMode: ReadingMode;
   handlePageChanged: (page: number) => void;
   handleLoadComplete: (total: number) => void;
+  toggleReadingMode: () => void;
 }
 
 export function useReader(id: string): UseReaderResult {
   const db = useSQLiteContext();
   const [book, setBook] = useState<Book | null>(null);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [readingMode, setReadingModeState] = useState<ReadingMode>(DEFAULT_READING_MODE);
   const bookRef = useRef<Book | null>(null);
   const pendingPageRef = useRef<number | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -48,6 +60,7 @@ export function useReader(id: string): UseReaderResult {
         return;
       }
 
+      setCurrentPage(page);
       pendingPageRef.current = page;
 
       if (timeoutRef.current) {
@@ -88,6 +101,15 @@ export function useReader(id: string): UseReaderResult {
     [db]
   );
 
+  const toggleReadingMode = useCallback(() => {
+    const nextMode: ReadingMode = readingMode === 'scroll' ? 'paged' : 'scroll';
+
+    setReadingModeState(nextMode);
+    void saveReadingMode(nextMode).catch((saveError) => {
+      console.error('[reader] failed to save reading mode', saveError);
+    });
+  }, [readingMode]);
+
   useEffect(() => {
     let active = true;
 
@@ -95,13 +117,23 @@ export function useReader(id: string): UseReaderResult {
       setLoading(true);
       bookRef.current = null;
       setBook(null);
+      setCurrentPage(1);
+      setReadingModeState(DEFAULT_READING_MODE);
 
       try {
-        const loadedBook = await getBook(db, id);
+        const [loadedBook, loadedReadingMode] = await Promise.all([
+          getBook(db, id),
+          getReadingMode().catch((settingsError) => {
+            console.error('[reader] failed to load reading mode', settingsError);
+            return DEFAULT_READING_MODE;
+          }),
+        ]);
 
         if (active) {
           bookRef.current = loadedBook;
           setBook(loadedBook);
+          setCurrentPage(loadedBook?.lastPage ?? 1);
+          setReadingModeState(loadedReadingMode);
         }
       } catch (loadError) {
         console.error('[reader] failed to load book', loadError);
@@ -124,7 +156,11 @@ export function useReader(id: string): UseReaderResult {
     book,
     loading,
     notFound: !loading && book === null,
+    currentPage,
+    totalPages: book?.totalPages ?? 0,
+    readingMode,
     handlePageChanged,
     handleLoadComplete,
+    toggleReadingMode,
   };
 }
