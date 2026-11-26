@@ -28,10 +28,19 @@
       "intentFilters": [
         {
           "action": "VIEW",
-          "category": ["DEFAULT", "BROWSABLE"],
+          "category": [
+            "DEFAULT",
+            "BROWSABLE"
+          ],
           "data": [
-            { "scheme": "content", "mimeType": "application/pdf" },
-            { "scheme": "file", "mimeType": "application/pdf" }
+            {
+              "scheme": "content",
+              "mimeType": "application/pdf"
+            },
+            {
+              "scheme": "file",
+              "mimeType": "application/pdf"
+            }
           ]
         }
       ]
@@ -43,7 +52,9 @@
       "expo-router",
       "expo-sqlite",
       "@config-plugins/react-native-blob-util",
-      "@config-plugins/react-native-pdf"
+      "@config-plugins/react-native-pdf",
+      "expo-font",
+      "expo-status-bar"
     ],
     "experiments": {
       "typedRoutes": true
