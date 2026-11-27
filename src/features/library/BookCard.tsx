@@ -1,5 +1,6 @@
 import type { Book } from '@/db';
 import { colorFromId, formatProgress } from '@/lib/format';
+import { useTheme } from '@/lib/ThemeProvider';
 import { useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -11,6 +12,7 @@ interface BookCardProps {
 }
 
 export function BookCard({ book, disabled = false, onPress, onLongPress }: BookCardProps) {
+  const { colors } = useTheme();
   const initial = book.title.trim().charAt(0).toUpperCase() || '?';
   const author = book.author.trim() || 'Unknown author';
   const [failedCoverUri, setFailedCoverUri] = useState<string | null>(null);
@@ -26,6 +28,11 @@ export function BookCard({ book, disabled = false, onPress, onLongPress }: BookC
       onLongPress={onLongPress}
       style={({ pressed }) => [
         styles.card,
+        {
+          backgroundColor: colors.card,
+          borderColor: colors.border,
+          shadowColor: colors.overlay,
+        },
         pressed && styles.pressed,
         disabled && styles.disabled,
       ]}
@@ -41,27 +48,24 @@ export function BookCard({ book, disabled = false, onPress, onLongPress }: BookC
           />
         ) : null}
       </View>
-      <Text style={styles.title} numberOfLines={2}>
+      <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>
         {book.title}
       </Text>
-      <Text style={styles.author} numberOfLines={1}>
+      <Text style={[styles.author, { color: colors.textSecondary }]} numberOfLines={1}>
         {author}
       </Text>
-      <Text style={styles.progress}>{formatProgress(book)}</Text>
+      <Text style={[styles.progress, { color: colors.primary }]}>{formatProgress(book)}</Text>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#ffffff',
-    borderColor: '#e5e7eb',
     borderRadius: 16,
     borderWidth: 1,
     elevation: 2,
     gap: 6,
     padding: 10,
-    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 8,
@@ -87,23 +91,20 @@ const styles = StyleSheet.create({
     top: 0,
   },
   initial: {
-    color: '#ffffff',
+    color: '#FFFFFF',
     fontSize: 48,
     fontWeight: '700',
   },
   title: {
-    color: '#111827',
     fontSize: 15,
     fontWeight: '600',
     lineHeight: 20,
     minHeight: 40,
   },
   author: {
-    color: '#6b7280',
     fontSize: 13,
   },
   progress: {
-    color: '#355070',
     fontSize: 12,
     fontWeight: '600',
   },

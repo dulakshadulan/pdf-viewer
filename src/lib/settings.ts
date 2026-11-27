@@ -14,3 +14,18 @@ export async function getReadingMode(): Promise<ReadingMode> {
 export async function setReadingMode(mode: ReadingMode): Promise<void> {
   await Storage.setItem(READING_MODE_KEY, mode);
 }
+
+export type ThemePreference = 'system' | 'light' | 'dark';
+
+export const DEFAULT_THEME_PREFERENCE: ThemePreference = 'system';
+
+const THEME_PREFERENCE_KEY = 'themePreference';
+
+export async function getThemePreference(): Promise<ThemePreference> {
+  const value = await Storage.getItem(THEME_PREFERENCE_KEY);
+  return value === 'light' || value === 'dark' ? value : DEFAULT_THEME_PREFERENCE;
+}
+
+export async function setThemePreference(preference: ThemePreference): Promise<void> {
+  await Storage.setItem(THEME_PREFERENCE_KEY, preference);
+}

@@ -1,5 +1,6 @@
 import { PdfViewer } from '@/features/reader/PdfViewer';
 import { useReader } from '@/features/reader/useReader';
+import { useTheme } from '@/lib/ThemeProvider';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -40,6 +41,7 @@ export default function ReaderScreen() {
   const pdfRef = useRef<PdfRef>(null);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
 
   const clearHideTimer = useCallback(() => {
     if (hideTimerRef.current) {
@@ -129,6 +131,8 @@ export default function ReaderScreen() {
       <Stack.Screen
         options={{
           title: book?.title ?? 'Reader',
+          headerStyle: { backgroundColor: colors.card },
+          headerTintColor: colors.text,
           headerRight: book
             ? () => (
                 <Pressable
@@ -142,7 +146,7 @@ export default function ReaderScreen() {
                   style={styles.headerButton}
                 >
                   <Ionicons
-                    color="#355070"
+                    color={colors.primary}
                     name={readingMode === 'scroll' ? 'swap-vertical' : 'swap-horizontal'}
                     size={22}
                   />
@@ -152,18 +156,23 @@ export default function ReaderScreen() {
         }}
       />
       {loading ? (
-        <View style={styles.centered}>
-          <ActivityIndicator color="#355070" size="large" />
+        <View style={[styles.centered, { backgroundColor: colors.background }]}>
+          <ActivityIndicator color={colors.primary} size="large" />
         </View>
       ) : notFound || book === null ? (
-        <View style={styles.centered}>
-          <Text style={styles.notFound}>Book not found</Text>
+        <View style={[styles.centered, { backgroundColor: colors.background }]}>
+          <Text style={[styles.notFound, { color: colors.text }]}>Book not found</Text>
         </View>
       ) : (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
           {pdfError ? (
-            <View style={styles.errorBanner}>
-              <Text style={styles.errorText}>{pdfError}</Text>
+            <View
+              style={[
+                styles.errorBanner,
+                { backgroundColor: colors.surface, borderBottomColor: colors.danger },
+              ]}
+            >
+              <Text style={[styles.errorText, { color: colors.danger }]}>{pdfError}</Text>
             </View>
           ) : null}
           <PdfViewer
@@ -189,9 +198,13 @@ export default function ReaderScreen() {
                 disabled={totalPages <= 0}
                 hitSlop={8}
                 onPress={openJumpModal}
-                style={({ pressed }) => [styles.pageButton, pressed && styles.pressed]}
+                style={({ pressed }) => [
+                  styles.pageButton,
+                  { backgroundColor: colors.card, borderColor: colors.primary },
+                  pressed && styles.pressed,
+                ]}
               >
-                <Text style={styles.pageCounter}>
+                <Text style={[styles.pageCounter, { color: colors.primary }]}>
                   {currentPage} / {totalPages > 0 ? totalPages : '—'}
                 </Text>
               </Pressable>
@@ -207,7 +220,7 @@ export default function ReaderScreen() {
       >
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.modalOverlay}
+          style={[styles.modalOverlay, { backgroundColor: colors.overlay }]}
         >
           <Pressable
             accessibilityLabel="Close go to page dialog"
@@ -215,8 +228,8 @@ export default function ReaderScreen() {
             onPress={closeJumpModal}
             style={StyleSheet.absoluteFill}
           />
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Go to page</Text>
+          <View style={[styles.modalCard, { backgroundColor: colors.card }]}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Go to page</Text>
             <TextInput
               accessibilityLabel="Page number"
               autoFocus
@@ -229,30 +242,41 @@ export default function ReaderScreen() {
               }}
               onSubmitEditing={handleJump}
               placeholder={`1–${totalPages}`}
+              placeholderTextColor={colors.textSecondary}
               returnKeyType="go"
               selectTextOnFocus
-              style={styles.modalInput}
+              selectionColor={colors.primary}
+              style={[
+                styles.modalInput,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                  color: colors.text,
+                },
+              ]}
               value={jumpInput}
             />
-            {jumpError ? <Text style={styles.modalError}>{jumpError}</Text> : null}
+            {jumpError ? (
+              <Text style={[styles.modalError, { color: colors.danger }]}>{jumpError}</Text>
+            ) : null}
             <View style={styles.modalActions}>
               <Pressable
                 accessibilityRole="button"
                 onPress={closeJumpModal}
                 style={({ pressed }) => [styles.modalButton, pressed && styles.pressed]}
               >
-                <Text style={styles.modalCancel}>Cancel</Text>
+                <Text style={[styles.modalCancel, { color: colors.textSecondary }]}>Cancel</Text>
               </Pressable>
               <Pressable
                 accessibilityRole="button"
                 onPress={handleJump}
                 style={({ pressed }) => [
                   styles.modalButton,
-                  styles.modalGoButton,
+                  { backgroundColor: colors.primary },
                   pressed && styles.pressed,
                 ]}
               >
-                <Text style={styles.modalGo}>Go</Text>
+                <Text style={[styles.modalGo, { color: colors.background }]}>Go</Text>
               </Pressable>
             </View>
           </View>
@@ -264,7 +288,6 @@ export default function ReaderScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#e5e7eb',
     flex: 1,
   },
   centered: {
@@ -274,19 +297,15 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   notFound: {
-    color: '#111827',
     fontSize: 20,
     fontWeight: '600',
     textAlign: 'center',
   },
   errorBanner: {
-    backgroundColor: '#fef2f2',
-    borderBottomColor: '#fecaca',
     borderBottomWidth: 1,
     padding: 12,
   },
   errorText: {
-    color: '#b91c1c',
     fontSize: 14,
     textAlign: 'center',
   },
@@ -302,13 +321,12 @@ const styles = StyleSheet.create({
     right: 0,
   },
   pageButton: {
-    backgroundColor: 'rgba(17, 24, 39, 0.82)',
     borderRadius: 999,
+    borderWidth: 1,
     paddingHorizontal: 16,
     paddingVertical: 8,
   },
   pageCounter: {
-    color: '#ffffff',
     fontSize: 14,
     fontWeight: '600',
   },
@@ -317,13 +335,11 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     alignItems: 'center',
-    backgroundColor: 'rgba(17, 24, 39, 0.45)',
     flex: 1,
     justifyContent: 'center',
     padding: 24,
   },
   modalCard: {
-    backgroundColor: '#ffffff',
     borderRadius: 16,
     gap: 12,
     maxWidth: 360,
@@ -331,23 +347,18 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   modalTitle: {
-    color: '#111827',
     fontSize: 18,
     fontWeight: '700',
   },
   modalInput: {
-    backgroundColor: '#ffffff',
-    borderColor: '#d1d5db',
     borderRadius: 8,
     borderWidth: 1,
-    color: '#111827',
     fontSize: 18,
     paddingHorizontal: 12,
     paddingVertical: 10,
     textAlign: 'center',
   },
   modalError: {
-    color: '#dc2626',
     fontSize: 14,
     textAlign: 'center',
   },
@@ -362,15 +373,10 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   modalCancel: {
-    color: '#374151',
     fontSize: 15,
     fontWeight: '600',
   },
-  modalGoButton: {
-    backgroundColor: '#355070',
-  },
   modalGo: {
-    color: '#ffffff',
     fontSize: 15,
     fontWeight: '600',
   },

@@ -3,6 +3,7 @@ import { BookCard } from '@/features/library/BookCard';
 import { EmptyLibrary } from '@/features/library/EmptyLibrary';
 import { useBooks } from '@/features/library/useBooks';
 import { useDeleteBook } from '@/features/library/useDeleteBook';
+import { useTheme } from '@/lib/ThemeProvider';
 import { router } from 'expo-router';
 import { useCallback } from 'react';
 import {
@@ -18,6 +19,7 @@ import {
 
 export default function LibraryScreen() {
   const { width } = useWindowDimensions();
+  const { colors } = useTheme();
   const { books, loading, error, refresh } = useBooks();
   const { confirmDelete, deletingId, error: deleteError } = useDeleteBook(refresh);
   const cardWidth = Math.floor((width - 48) / 2);
@@ -42,21 +44,25 @@ export default function LibraryScreen() {
 
   const emptyContent = loading ? (
     <View style={styles.centered}>
-      <ActivityIndicator color="#355070" size="large" />
-      <Text style={styles.muted}>Loading your library...</Text>
+      <ActivityIndicator color={colors.primary} size="large" />
+      <Text style={[styles.muted, { color: colors.textSecondary }]}>Loading your library...</Text>
     </View>
   ) : error ? (
     <View style={styles.centered}>
-      <Text style={styles.errorTitle}>Something went wrong</Text>
-      <Text style={styles.muted}>{error}</Text>
+      <Text style={[styles.errorTitle, { color: colors.text }]}>Something went wrong</Text>
+      <Text style={[styles.muted, { color: colors.textSecondary }]}>{error}</Text>
       <Pressable
         accessibilityRole="button"
         onPress={() => {
           void refresh();
         }}
-        style={({ pressed }) => [styles.retryButton, pressed && styles.pressed]}
+        style={({ pressed }) => [
+          styles.retryButton,
+          { backgroundColor: colors.primary },
+          pressed && styles.pressed,
+        ]}
       >
-        <Text style={styles.retryText}>Try again</Text>
+        <Text style={[styles.retryText, { color: colors.background }]}>Try again</Text>
       </Pressable>
     </View>
   ) : (
@@ -73,7 +79,20 @@ export default function LibraryScreen() {
       keyExtractor={(item) => item.id}
       ListEmptyComponent={emptyContent}
       ListHeaderComponent={
-        bannerError ? <Text style={styles.banner}>{bannerError}</Text> : undefined
+        bannerError ? (
+          <Text
+            style={[
+              styles.banner,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.danger,
+                color: colors.danger,
+              },
+            ]}
+          >
+            {bannerError}
+          </Text>
+        ) : undefined
       }
       numColumns={2}
       onRefresh={() => {
@@ -82,6 +101,7 @@ export default function LibraryScreen() {
       refreshing={loading && books.length > 0}
       renderItem={renderItem}
       showsVerticalScrollIndicator={false}
+      style={{ backgroundColor: colors.background }}
     />
   );
 }
@@ -104,18 +124,15 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   muted: {
-    color: '#6b7280',
     fontSize: 15,
     textAlign: 'center',
   },
   errorTitle: {
-    color: '#111827',
     fontSize: 20,
     fontWeight: '700',
     textAlign: 'center',
   },
   retryButton: {
-    backgroundColor: '#355070',
     borderRadius: 999,
     paddingHorizontal: 22,
     paddingVertical: 11,
@@ -124,16 +141,12 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
   retryText: {
-    color: '#ffffff',
     fontSize: 15,
     fontWeight: '600',
   },
   banner: {
-    backgroundColor: '#fef2f2',
-    borderColor: '#fecaca',
     borderRadius: 10,
     borderWidth: 1,
-    color: '#b91c1c',
     fontSize: 14,
     padding: 12,
   },
