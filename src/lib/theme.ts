@@ -29,16 +29,16 @@ export const lightColors: ThemeColors = {
 };
 
 export const darkColors: ThemeColors = {
-  background: '#15181E',
-  surface: '#1E232B',
-  card: '#252B34',
-  text: '#F3F4F6',
-  textSecondary: '#A7B0BD',
-  border: '#343B46',
-  primary: '#9CC2E8',
+  background: '#0E0E10',
+  surface: '#17171A',
+  card: '#1C1C20',
+  text: '#EDEDEE',
+  textSecondary: '#A1A1A8',
+  border: '#2C2C31',
+  primary: '#9DB8D6',
   danger: '#F87171',
-  tabBar: '#1A1E25',
-  tabIconActive: '#9CC2E8',
-  tabIconInactive: '#8B95A5',
-  overlay: 'rgba(0, 0, 0, 0.65)',
+  tabBar: '#121214',
+  tabIconActive: '#9DB8D6',
+  tabIconInactive: '#8A8A92',
+  overlay: 'rgba(0, 0, 0, 0.7)',
 };
