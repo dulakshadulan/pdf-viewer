@@ -29,3 +29,20 @@ export async function getThemePreference(): Promise<ThemePreference> {
 export async function setThemePreference(preference: ThemePreference): Promise<void> {
   await Storage.setItem(THEME_PREFERENCE_KEY, preference);
 }
+
+export type PageTheme = 'auto' | 'white' | 'sepia' | 'night';
+
+export const DEFAULT_PAGE_THEME: PageTheme = 'auto';
+
+const PAGE_THEME_KEY = 'pageTheme';
+
+export async function getPageTheme(): Promise<PageTheme> {
+  const value = await Storage.getItem(PAGE_THEME_KEY);
+  return value === 'white' || value === 'sepia' || value === 'night'
+    ? value
+    : DEFAULT_PAGE_THEME;
+}
+
+export async function setPageTheme(theme: PageTheme): Promise<void> {
+  await Storage.setItem(PAGE_THEME_KEY, theme);
+}

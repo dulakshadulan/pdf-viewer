@@ -1,6 +1,12 @@
+import {
+  PAGE_THEME_BACKGROUNDS,
+  PageColorOverlay,
+  resolvePageTheme,
+} from '@/features/reader/PageColorOverlay';
 import { PdfViewer } from '@/features/reader/PdfViewer';
 import { useReader } from '@/features/reader/useReader';
 import { useTheme } from '@/lib/ThemeProvider';
+import type { PageTheme } from '@/lib/settings';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -19,6 +25,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { PdfError, PdfRef } from 'react-native-pdf';
 
 const CONTROLS_HIDE_DELAY_MS = 3000;
+const PAGE_THEME_ORDER: PageTheme[] = ['auto', 'white', 'sepia', 'night'];
 
 export default function ReaderScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -29,9 +36,11 @@ export default function ReaderScreen() {
     currentPage,
     totalPages,
     readingMode,
+    pageTheme,
     handleLoadComplete,
     handlePageChanged,
     toggleReadingMode,
+    setPageTheme,
   } = useReader(id);
   const [pdfError, setPdfError] = useState<string | null>(null);
   const [controlsVisible, setControlsVisible] = useState(true);
@@ -41,7 +50,11 @@ export default function ReaderScreen() {
   const pdfRef = useRef<PdfRef>(null);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
+  const resolvedPageTheme = resolvePageTheme(pageTheme, isDark);
+  const pageBackgroundColor = PAGE_THEME_BACKGROUNDS[resolvedPageTheme];
+  const nextPageTheme =
+    PAGE_THEME_ORDER[(PAGE_THEME_ORDER.indexOf(pageTheme) + 1) % PAGE_THEME_ORDER.length];
 
   const clearHideTimer = useCallback(() => {
     if (hideTimerRef.current) {
@@ -83,6 +96,11 @@ export default function ReaderScreen() {
     toggleReadingMode();
     showControls();
   }, [showControls, toggleReadingMode]);
+
+  const handleCyclePageTheme = useCallback(() => {
+    setPageTheme(nextPageTheme);
+    showControls();
+  }, [nextPageTheme, setPageTheme, showControls]);
 
   const handlePageTap = useCallback(() => {
     showControls();
@@ -135,36 +153,50 @@ export default function ReaderScreen() {
           headerTintColor: colors.text,
           headerRight: book
             ? () => (
-                <Pressable
-                  accessibilityHint="Changes the page layout."
-                  accessibilityLabel={
-                    readingMode === 'scroll' ? 'Switch to paged mode' : 'Switch to scroll mode'
-                  }
-                  accessibilityRole="button"
-                  hitSlop={12}
-                  onPress={handleToggleReadingMode}
-                  style={styles.headerButton}
-                >
-                  <Ionicons
-                    color={colors.primary}
-                    name={readingMode === 'scroll' ? 'swap-vertical' : 'swap-horizontal'}
-                    size={22}
-                  />
-                </Pressable>
+                <View style={styles.headerActions}>
+                  <Pressable
+                    accessibilityHint="Changes the reader page color."
+                    accessibilityLabel={`Page color: ${pageTheme}${
+                      pageTheme === 'auto' ? ` (${resolvedPageTheme})` : ''
+                    }. Switch to ${nextPageTheme}.`}
+                    accessibilityRole="button"
+                    hitSlop={12}
+                    onPress={handleCyclePageTheme}
+                    style={styles.headerButton}
+                  >
+                    <Ionicons color={colors.primary} name="color-palette-outline" size={22} />
+                  </Pressable>
+                  <Pressable
+                    accessibilityHint="Changes the page layout."
+                    accessibilityLabel={
+                      readingMode === 'scroll' ? 'Switch to paged mode' : 'Switch to scroll mode'
+                    }
+                    accessibilityRole="button"
+                    hitSlop={12}
+                    onPress={handleToggleReadingMode}
+                    style={styles.headerButton}
+                  >
+                    <Ionicons
+                      color={colors.primary}
+                      name={readingMode === 'scroll' ? 'swap-vertical' : 'swap-horizontal'}
+                      size={22}
+                    />
+                  </Pressable>
+                </View>
               )
             : undefined,
         }}
       />
       {loading ? (
-        <View style={[styles.centered, { backgroundColor: colors.background }]}>
+        <View style={[styles.centered, { backgroundColor: pageBackgroundColor }]}>
           <ActivityIndicator color={colors.primary} size="large" />
         </View>
       ) : notFound || book === null ? (
-        <View style={[styles.centered, { backgroundColor: colors.background }]}>
+        <View style={[styles.centered, { backgroundColor: pageBackgroundColor }]}>
           <Text style={[styles.notFound, { color: colors.text }]}>Book not found</Text>
         </View>
       ) : (
-        <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={[styles.container, { backgroundColor: pageBackgroundColor }]}>
           {pdfError ? (
             <View
               style={[
@@ -175,17 +207,26 @@ export default function ReaderScreen() {
               <Text style={[styles.errorText, { color: colors.danger }]}>{pdfError}</Text>
             </View>
           ) : null}
-          <PdfViewer
-            key={readingMode}
-            ref={pdfRef}
-            fileUri={book.fileUri}
-            initialPage={currentPage}
-            readingMode={readingMode}
-            onPageChanged={handlePageChanged}
-            onLoadComplete={handleLoadComplete}
-            onError={handlePdfError}
-            onPageTap={handlePageTap}
-          />
+          <View style={styles.pdfContainer}>
+            <PdfViewer
+              key={readingMode}
+              ref={pdfRef}
+              fileUri={book.fileUri}
+              initialPage={currentPage}
+              readingMode={readingMode}
+              onPageChanged={handlePageChanged}
+              onLoadComplete={handleLoadComplete}
+              onError={handlePdfError}
+              onPageTap={handlePageTap}
+            />
+            <PageColorOverlay mode={resolvedPageTheme} />
+            {__DEV__ ? (
+              <Text pointerEvents="none" style={styles.devLabel}>
+                Page color: {pageTheme}
+                {pageTheme === 'auto' ? ` (${resolvedPageTheme})` : ''}
+              </Text>
+            ) : null}
+          </View>
           {controlsVisible ? (
             <View
               pointerEvents="box-none"
@@ -290,6 +331,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  pdfContainer: {
+    backgroundColor: '#FFFFFF',
+    flex: 1,
+    isolation: 'isolate',
+  },
   centered: {
     alignItems: 'center',
     flex: 1,
@@ -309,8 +355,24 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
   },
+  headerActions: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 12,
+  },
   headerButton: {
     paddingHorizontal: 4,
+  },
+  devLabel: {
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    borderRadius: 6,
+    color: '#FFFFFF',
+    fontSize: 12,
+    left: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    position: 'absolute',
+    top: 8,
   },
   bottomBar: {
     alignItems: 'center',

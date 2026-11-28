@@ -1,9 +1,13 @@
 import type { Book } from '@/db';
 import { getBook, updateProgress, updateTotalPages } from '@/db';
 import {
+  DEFAULT_PAGE_THEME,
   DEFAULT_READING_MODE,
+  getPageTheme,
   getReadingMode,
+  setPageTheme as savePageTheme,
   setReadingMode as saveReadingMode,
+  type PageTheme,
   type ReadingMode,
 } from '@/lib/settings';
 import { useSQLiteContext } from 'expo-sqlite';
@@ -18,9 +22,11 @@ export interface UseReaderResult {
   currentPage: number;
   totalPages: number;
   readingMode: ReadingMode;
+  pageTheme: PageTheme;
   handlePageChanged: (page: number) => void;
   handleLoadComplete: (total: number) => void;
   toggleReadingMode: () => void;
+  setPageTheme: (theme: PageTheme) => void;
 }
 
 export function useReader(id: string): UseReaderResult {
@@ -29,6 +35,7 @@ export function useReader(id: string): UseReaderResult {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [readingMode, setReadingModeState] = useState<ReadingMode>(DEFAULT_READING_MODE);
+  const [pageTheme, setPageThemeState] = useState<PageTheme>(DEFAULT_PAGE_THEME);
   const bookRef = useRef<Book | null>(null);
   const pendingPageRef = useRef<number | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -110,6 +117,13 @@ export function useReader(id: string): UseReaderResult {
     });
   }, [readingMode]);
 
+  const setPageTheme = useCallback((nextPageTheme: PageTheme) => {
+    setPageThemeState(nextPageTheme);
+    void savePageTheme(nextPageTheme).catch((saveError) => {
+      console.error('[reader] failed to save page theme', saveError);
+    });
+  }, []);
+
   useEffect(() => {
     let active = true;
 
@@ -119,13 +133,18 @@ export function useReader(id: string): UseReaderResult {
       setBook(null);
       setCurrentPage(1);
       setReadingModeState(DEFAULT_READING_MODE);
+      setPageThemeState(DEFAULT_PAGE_THEME);
 
       try {
-        const [loadedBook, loadedReadingMode] = await Promise.all([
+        const [loadedBook, loadedReadingMode, loadedPageTheme] = await Promise.all([
           getBook(db, id),
           getReadingMode().catch((settingsError) => {
             console.error('[reader] failed to load reading mode', settingsError);
             return DEFAULT_READING_MODE;
+          }),
+          getPageTheme().catch((settingsError) => {
+            console.error('[reader] failed to load page theme', settingsError);
+            return DEFAULT_PAGE_THEME;
           }),
         ]);
 
@@ -134,6 +153,7 @@ export function useReader(id: string): UseReaderResult {
           setBook(loadedBook);
           setCurrentPage(loadedBook?.lastPage ?? 1);
           setReadingModeState(loadedReadingMode);
+          setPageThemeState(loadedPageTheme);
         }
       } catch (loadError) {
         console.error('[reader] failed to load book', loadError);
@@ -159,8 +179,10 @@ export function useReader(id: string): UseReaderResult {
     currentPage,
     totalPages: book?.totalPages ?? 0,
     readingMode,
+    pageTheme,
     handlePageChanged,
     handleLoadComplete,
     toggleReadingMode,
+    setPageTheme,
   };
 }

@@ -3,9 +3,16 @@ import { runDatabaseSmokeTest } from '@/db/devCheck';
 import { errorMessage } from '@/lib/errors';
 import { runFileSystemSmokeTest } from '@/lib/devCheck';
 import { useTheme } from '@/lib/ThemeProvider';
-import type { ThemePreference } from '@/lib/settings';
+import {
+  DEFAULT_PAGE_THEME,
+  getPageTheme,
+  setPageTheme as savePageTheme,
+  type PageTheme,
+  type ThemePreference,
+} from '@/lib/settings';
+import { useFocusEffect } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 const THEME_OPTIONS: { label: string; value: ThemePreference }[] = [
@@ -14,11 +21,46 @@ const THEME_OPTIONS: { label: string; value: ThemePreference }[] = [
   { label: 'Dark', value: 'dark' },
 ];
 
+const PAGE_THEME_OPTIONS: { label: string; value: PageTheme }[] = [
+  { label: 'Auto', value: 'auto' },
+  { label: 'White', value: 'white' },
+  { label: 'Sepia', value: 'sepia' },
+  { label: 'Night', value: 'night' },
+];
+
 export default function SettingsScreen() {
   const db = useSQLiteContext();
   const { colors, preference, setPreference } = useTheme();
+  const [pageTheme, setPageTheme] = useState<PageTheme>(DEFAULT_PAGE_THEME);
   const [bookCount, setBookCount] = useState<number | null>(null);
   const [fileTestResult, setFileTestResult] = useState<string | null>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+
+      getPageTheme()
+        .then((savedPageTheme) => {
+          if (active) {
+            setPageTheme(savedPageTheme);
+          }
+        })
+        .catch((error) => {
+          console.error('[settings] failed to load page theme', error);
+        });
+
+      return () => {
+        active = false;
+      };
+    }, [])
+  );
+
+  const handlePageThemeChange = (nextPageTheme: PageTheme) => {
+    setPageTheme(nextPageTheme);
+    void savePageTheme(nextPageTheme).catch((error) => {
+      console.error('[settings] failed to save page theme', error);
+    });
+  };
 
   const handleDatabaseSmokeTest = async () => {
     try {
@@ -84,6 +126,52 @@ export default function SettingsScreen() {
                 onPress={() => {
                   void setPreference(option.value);
                 }}
+                style={({ pressed }) => [
+                  styles.appearanceOption,
+                  selected && { backgroundColor: colors.primary },
+                  pressed && styles.pressed,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.appearanceOptionText,
+                    { color: selected ? colors.background : colors.textSecondary },
+                  ]}
+                >
+                  {option.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
+
+      <View
+        style={[
+          styles.appearanceCard,
+          { backgroundColor: colors.card, borderColor: colors.border },
+        ]}
+      >
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Page color</Text>
+        <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
+          Choose the page background in the reader.
+        </Text>
+        <View
+          style={[
+            styles.appearanceOptions,
+            { backgroundColor: colors.surface, borderColor: colors.border },
+          ]}
+        >
+          {PAGE_THEME_OPTIONS.map((option) => {
+            const selected = pageTheme === option.value;
+
+            return (
+              <Pressable
+                key={option.value}
+                accessibilityLabel={`${option.label} page color`}
+                accessibilityRole="button"
+                accessibilityState={{ selected }}
+                onPress={() => handlePageThemeChange(option.value)}
                 style={({ pressed }) => [
                   styles.appearanceOption,
                   selected && { backgroundColor: colors.primary },
